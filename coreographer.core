@@ -109,7 +109,8 @@ generators:
       Uses configs/default.json or custom config file.
 
 generate:
-  - coreographer_top_gen
+  coreographer_top_gen:
+    generator: coreographer_top_geni
 
 targets:
   default: &default

@@ -1,3 +1,6 @@
 [submodule "rtl/cores/vexriscv"]
 	path = rtl/cores/vexriscv
 	url = https://github.com/SpinalHDL/VexRiscv
+[submodule "fusesoc-cores"]
+	path = fusesoc-cores
+	url = https://github.com/fusesoc/fusesoc-cores
