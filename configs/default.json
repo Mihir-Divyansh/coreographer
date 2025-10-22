@@ -1,0 +1,62 @@
+{
+  "project": {
+    "name": "coreographer",
+    "version": "0.1.0",
+    "description": "Multi-core RISC-V with hardware scheduler"
+  },
+  
+  "cores": {
+    "num_cores": 4,
+    "xlen": 32,
+    "core_types": [
+      {"id": 0, "isa": "RV32I", "name": "core_0"},
+      {"id": 1, "isa": "RV32I", "name": "core_1"},
+      {"id": 2, "isa": "RV32IM", "name": "core_2"},
+      {"id": 3, "isa": "RV32IM", "name": "core_3"}
+    ]
+  },
+  
+  "topology": {
+    "type": "ring",
+    "neighbor_access_latency": 1,
+    "connections": [
+      {"core": 0, "neighbors": [1, 3]},
+      {"core": 1, "neighbors": [0, 2]},
+      {"core": 2, "neighbors": [1, 3]},
+      {"core": 3, "neighbors": [2, 0]}
+    ]
+  },
+  
+  "memory": {
+    "data_mem_size": 32768,
+    "data_mem_addr_width": 15,
+    "instruction_cache_size": 8192,
+    "shared": true,
+    "arbiter_type": "round_robin"
+  },
+  
+  "scheduler": {
+    "task_cache_depth": 32,
+    "dispatch_bus_width": 128,
+    "max_dependencies": 8,
+    "priority_levels": 4
+  },
+  
+  "clock": {
+    "frequency_mhz": 100,
+    "reset_cycles": 10
+  },
+  
+  "fpga": {
+    "board": "pynq-z2",
+    "part": "xc7z020clg400-1",
+    "use_zynq_ps": false,
+    "constraints": "constraints/pynq_z2.xdc"
+  },
+  
+  "debug": {
+    "enable_performance_counters": true,
+    "enable_waveform_dump": true,
+    "trace_neighbor_accesses": true
+  }
+}

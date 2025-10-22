@@ -1,0 +1,563 @@
+\documentclass[12pt,letterpaper]{report}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc}
+\usepackage{circuitikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{siunitx}
+\usepackage{xcolor}
+
+% ===== COLORS =====
+\definecolor{codeblue}{RGB}{0,102,204}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{codegreen}{RGB}{0,153,76}
+\definecolor{backcolour}{RGB}{248,248,248}
+\definecolor{accent}{RGB}{200,20,20}
+\definecolor{warning}{RGB}{255,165,0}
+\definecolor{error}{RGB}{220,20,60}
+\definecolor{success}{RGB}{34,139,34}
+\definecolor{desframe}{RGB}{10,139,10}
+
+% ===== CODE LISTINGS SETUP =====
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{purple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{accent},
+    aboveskip=1em,
+    belowskip=1em
+}
+\lstset{style=mystyle}
+
+% Language definitions for common CA languages
+\lstdefinelanguage{Verilog}{
+    keywords={module,endmodule,input,output,reg,wire,always,begin,end,if,else,case,endcase,for,while,assign,parameter},
+    keywordstyle=\color{codeblue}\bfseries,
+    comment=[l]{//},
+    commentstyle=\color{codegreen}\itshape,
+    string=[b]",
+    stringstyle=\color{purple}
+}
+
+\lstdefinelanguage{Assembly}{
+    keywords={mov,add,sub,mul,div,jmp,je,jne,jl,jg,call,ret,push,pop,nop,halt},
+    keywordstyle=\color{codeblue}\bfseries,
+    comment=[l]{;},
+    commentstyle=\color{codegreen}\itshape,
+    sensitive=false
+}
+
+% ===== CUSTOM BOXES =====
+\newtcolorbox{specbox}[1][]{
+    colback=red!10!white,
+    colframe=accent,
+    title=Specification,
+    fonttitle=\bfseries,
+    #1
+}
+
+\newtcolorbox{designbox}[1][]{
+    colback=green!5!white,
+    colframe=desframe,
+    title=Design Decision,
+    fonttitle=\bfseries,
+    #1
+}
+
+\newtcolorbox{warningbox}[1][]{
+    colback=orange!10!white,
+    colframe=warning,
+    title=Important Note,
+    fonttitle=\bfseries,
+    #1
+}
+
+\newtcolorbox{resultbox}[1][]{
+    colback=gray!5!white,
+    colframe=gray,
+    title=Results Summary,
+    fonttitle=\bfseries,
+    #1
+}
+
+% ===== CUSTOM COMMANDS =====
+% Quick formatting
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{\textbf{#1}}}
+\newcommand{\register}[1]{\textsc{#1}}
+\newcommand{\signal}[1]{\textit{#1}}
+
+% Units and measurements
+\newcommand{\mhz}[1]{#1~MHz}
+\newcommand{\ghz}[1]{#1~GHz}
+\newcommand{\ns}[1]{#1~ns}
+\newcommand{\us}[1]{#1~μs}
+\newcommand{\ms}[1]{#1~ms}
+
+% Quick todos and notes
+\newcommand{\todo}[1]{\textcolor{error}{\textbf{TODO: #1}}}
+\newcommand{\note}[1]{\textcolor{accent}{\textbf{Note: #1}}}
+\newcommand{\fixme}[1]{\textcolor{warning}{\textbf{FIXME: #1}}}
+
+% Performance metrics table
+\newcommand{\perftable}[4]{
+    \begin{table}[H]
+    \centering
+    \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Metric} & \textbf{Value} \\
+    \midrule
+    Clock Frequency & #1 \\
+    CPI & #2 \\
+    Throughput & #3 \\
+    Power Consumption & #4 \\
+    \bottomrule
+    \end{tabular}
+    \caption{Performance Summary}
+    \end{table}
+}
+
+% ===== HEADER/FOOTER SETUP =====
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{Coreographer}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Chapter title formatting
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{accent}}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+% ===== HYPERREF SETUP =====
+\hypersetup{
+    colorlinks=true,
+    linkcolor=accent,
+    filecolor=accent,      
+    urlcolor=accent,
+    citecolor=accent,
+    pdftitle={Computer Architecture Final Project},
+    pdfauthor={Mihir Divyansh},
+    pdfsubject={Computer Architecture},
+    pdfkeywords={risc-v, multi-core, architecture}
+}
+
+% ===== THEOREM ENVIRONMENTS =====
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{requirement}{Requirement}[chapter]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}{Lemma}[chapter]
+
+% ===== DOCUMENT INFORMATION =====
+\title{
+    \vspace{2in}
+    \textmd{\textbf{Coreographer}}\\
+    \normalsize\vspace{0.1in}\small{Resource sharing and Distribution in Heterogeneous Multi Core Architectures}\\
+    \vspace{0.1in}\large{\textit{CS2323 - Computer Architecture}}
+    \vspace{3in}
+}
+
+\author{
+    \textbf{E. Mihir Divyansh}\\
+    Roll Number: EE23BTECH11017\\
+    \texttt{ee23btech11017@iith.ac.in}
+}
+
+\date{\today}
+
+% ===== DOCUMENT BEGIN =====
+\begin{document}
+
+% ===== TITLE PAGE =====
+\maketitle
+\thispagestyle{empty}
+
+% ===== TABLE OF CONTENTS =====
+\tableofcontents
+\listoffigures
+\listoftables
+\lstlistoflistings
+
+% ===== ABSTRACT =====
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This report documents the design and implementation of a heterogeneous RISC-V based 
+multi-core architecture that demonstrates register file
+sharing, and instruction distribution techniques
+inspired by GPU streaming multiprocessors. I try to show how context switching and 
+heterogeneous compute capabilitiescan show performance improvements.
+
+\textbf{Keywords:} RISC-V, multi-core, latency hiding, workload distribution
+
+% ===== MAIN CONTENT =====
+\chapter{Introduction}
+
+
+\section{Overview}
+At the most fundamental level, any processor is designed to execute a sequence of instructions. 
+This typically involves three things: fetching and decoding instructions, 
+performing computation, and interacting with memory. 
+While these capabilities are sufficient for general-purpose workloads, some applications 
+often demand higher performance, particularly when dealing with data-parallel tasks.
+
+One approach to improving performance is parallelism. By deploying multiple 
+processing cores, systems can execute independent or partially independent streams of 
+instructions concurrently. Traditional multi-core processors achieve this by replicating 
+cores, each with its own private resources. This improves throughput but comes at the cost 
+of increased hardware area and resource duplication. 
+Consider, for example, a quad-core processor where each core has its own 
+register file. If the workload consists of 
+four independent instructions, all cores can be kept busy, and throughput improves. However, 
+if due to a dependence, only 1 instruction can be executed, three of the cores remain idle while still 
+having their unused compute and memory resources. In such a scenario, hardware resources are 
+underutilized. This motivates the study and design of architectures 
+that allow multiple cores to share resources and adapt to varying levels of 
+parallelism in the workload.
+
+This project explores an alternative approach: accelerating a subset of parallel workloads by 
+combining multiple RISC-V cores with a shared register file. 
+Inspired by GPU streaming multiprocessors, the design explores mechanisms for 
+instruction distribution, register file sharing, and centralized scheduling. 
+The goal is to demonstrate that resource sharing and context-switching techniques 
+can improve utilization and efficiency without incurring the full hardware 
+overhead of a homogeneous multi-core design.
+
+
+\section{Scope of the Project}
+
+The project involves the following tasks:
+\begin{enumerate}[leftmargin=*]
+    \item Port an existing single-core RISC-V processor implementation to FPGA hardware and verify functionality.
+    \item Modify the baseline design to support resource sharing (shared register file) and instruction distribution across multiple cores.
+    \item Design and implement a scheduler/dispatcher to manage instruction allocation and context switching.
+    \item Integrate a configurable number (4-8) of lightweight RISC-V cores with the shared register file and scheduler at the system level.
+    \item Identify representative workloads that can benefit from this architecture.
+    \item Demonstrate the working design on FPGA hardware.
+    \item \textit{(Optional)} Implement and execute benchmarks on both baseline and proposed designs.
+    \item \textit{(Optional)} Compare performance improvements against baseline and homogeneous multi-core systems.
+\end{enumerate}
+
+\begin{warningbox}[title=Input Specification]
+The input to the system will be assembly programs that are pre-structured to align 
+with the proposed architecture. These programs will be prepared to reduce scheduler 
+complexity, allowing focus on architectural evaluation rather than handling uncommon 
+corner cases during scheduler design.
+\end{warningbox}
+\subsection{Architecture Overview}
+The proposed system consists of:
+\begin{itemize}
+    \item \textbf{Heterogeneous worker cores:} 4-8 configurable RISC-V cores with 
+          different ISA extensions (e.g., RV32I, RV32IM, RV32IMF). All cores maintain 
+          the same bitwidth to avoid bus complexity.
+    \item \textbf{Shared register file:} A large, banked register file (512-1024 
+          32-bit registers) partitioned into contexts. Each context provides 32 registers, 
+          matching the standard RISC-V ISA. The shared design enables context migration 
+          between cores without data copying.
+    \item \textbf{Instruction cache:} Shared or per-core instruction caches. Data 
+          caches are omitted in the initial design to reduce complexity.
+    \item \textbf{Centralized scheduler:} A dedicated hardware scheduler (see Section 
+          \ref{sec:scheduler_spec}) that manages micro-task dispatch and context allocation.
+\end{itemize}
+\subsection{Scheduler Specifications}
+\label{sec:scheduler_spec}
+The scheduler is implemented as a \textbf{dedicated hardware core}, distinct from the
+worker RISC-V cores. It executes a customized, lightweight version of the RISC-V ISA 
+optimized for scheduling operations and context management, functioning as a 
+pseudo-hardware OS scheduler.
+
+\subsubsection{Context Management Model}
+A \textbf{context} in this architecture consists of:
+\begin{itemize}
+    \item A 32-register slice allocated from the shared register file
+    \item Program counter (PC) value maintained at the scheduler
+    \item Status flags (ready, stalled, incapable)
+\end{itemize}
+
+When a context must migrate due to long-latency operations (e.g., memory access), 
+the scheduler can reallocate the context's register slice to any idle, capable core 
+without copying register contents—the physical registers remain in the shared file.
+
+\subsubsection{Core Responsibilities}
+The scheduler manages:
+\begin{itemize}
+    \item \textbf{Micro-task dispatch:} Maintain a queue of ready micro-tasks 
+          and allocate them based on core capabilities and availability.
+    \item \textbf{Context management:} Maintain per-context metadata including 
+          register file slice mapping, PC values, and status (ready, incapable, 
+          stalled on memory, stalled on compute) via a Core Capability and 
+          Availability Table.
+    \item \textbf{Workload distribution:} Match micro-tasks to cores based on 
+          required ISA extensions and current availability.
+    \item \textbf{Register allocation and reclamation:} Allocate physical register-file 
+          slices to active contexts and reclaim on context retirement. Track 
+          occupancy and commits.
+    \item \textbf{Context migration:} Enable context switching between cores when 
+          long-latency events occur and the original core becomes unavailable but 
+          another capable core is idle.
+    \item \textbf{Observability and counters:} Expose counters for dispatched micro-tasks, 
+          context switches, context migrations, register-file utilization, core idle 
+          time, and stalls.
+\end{itemize}
+
+\begin{designbox}[title=Register File Design Considerations]
+The shared register file presents several design challenges:
+\begin{itemize}
+    \item \textbf{Banking:} Register file will likely be banked to reduce port 
+          contention and area overhead. Specific banking strategy to be determined 
+          based on access patterns and referenced literature \cite{registerbank1, registerbank2}.
+    \item \textbf{Timing:} May use BRAMs with negative-edge latching to achieve 
+          single-cycle apparent latency if running at slightly reduced frequency.
+    \item \textbf{Sizing:} 512-1024 registers total, supporting 2-4 contexts per core 
+          for 4-8 cores respectively.
+\end{itemize}
+\end{designbox}
+
+\subsection{Design Constraints and Simplifications}
+To maintain project feasibility within time constraints, the following simplifications 
+are made:
+\begin{itemize}
+    \item \textbf{No data caches:} The system omits L1 data caches to reduce design 
+          complexity. Only instruction caches are included.
+    \item \textbf{Micro-task level scheduling:} Rather than instruction-level scheduling 
+          (impractical in hardware), the system schedules pre-analyzed micro-tasks with 
+          explicit dependencies.
+    \item \textbf{Same bitwidth ISA:} All cores use the same register bitwidth (32 or 64) 
+          to avoid bus width mismatches.
+    \item \textbf{Pre-annotated programs:} Input programs are prepared with capability 
+          requirements and dependency hints to simplify scheduler logic.
+\end{itemize}
+
+\subsection{Success Criteria}
+\begin{specbox}[title=Functional Requirements]
+\begin{itemize}
+    \item The multi-core system functions correctly on FPGA hardware.
+    \item Scheduler successfully distributes micro-tasks across heterogeneous cores 
+          based on capability matching.
+    \item Context migration works correctly—contexts can be reassigned to different 
+          capable cores without data corruption.
+    \item System maintains or improves performance compared to single-core baseline 
+          for suitable parallel workloads.
+    \item Register file sharing operates without deadlocks, bank conflicts cause 
+          acceptable (not catastrophic) performance degradation.
+    \item Observability counters accurately report system behavior for analysis.
+\end{itemize}
+\end{specbox}
+
+
+\chapter{Background and Previous Work}
+Before I embark on designing the blocks for the project, I need to study and understand a few concepts. The following sections document my reading process.
+
+\section{Streaming Multiprocessors in GPUs}
+Streaming Multiprocessors are the general purpose repeating blocks found in NVIDIA GPUs
+They have the necessary units to perform massive parallel computations of 
+different types. They can perform
+\begin{itemize}
+    \item Float32, Float64 operations
+    \item Integer operations
+    \item Texture operations (DSP ops, Fast Random Memory Access)
+    \item Tensor Operations (Matrices)
+    \item Other Special Functions (sin, cos, exp)
+\end{itemize}
+
+
+
+
+\section{Existing Architectures}
+
+\chapter{System Specifications}
+
+\section{Functional Requirements}
+
+\begin{designbox}[title=Instruction Set Architecture]
+\begin{itemize}
+    \item Instruction format: [specify format]
+    \item Instruction types: [list types]
+    \item Register file: [specify size and organization]
+    \item Memory addressing: [describe addressing modes]
+\end{itemize}
+\end{designbox}
+
+\section{Performance Requirements}
+
+\begin{specbox}[title=Performance Targets]
+\begin{itemize}
+    \item Target clock frequency: \ghz{X.X}
+    \item Maximum CPI: X.X
+    \item Pipeline depth: X stages
+    \item Cache miss penalty: < \ns{XX}
+\end{itemize}
+\end{specbox}
+
+\chapter{Design and Implementation}
+
+\section{System Architecture}
+
+% \begin{designbox}[title=Pipeline Design]
+% The processor implements a X-stage pipeline with the following stages:
+% \begin{enumerate}
+%     \item Fetch (IF)
+%     \item Decode (ID)
+%     \item Execute (EX)
+%     \item Memory Access (MEM)
+%     \item Write Back (WB)
+% \end{enumerate}
+% \end{designbox}
+
+
+% Example table for cache specifications
+% \begin{table}[H]
+% \centering
+% \begin{tabular}{@{}lll@{}}
+% \toprule
+% \textbf{Cache Level} & \textbf{Size} & \textbf{Associativity} \\
+% \midrule
+% L1 Instruction & 32KB & 2-way \\
+% L1 Data & 32KB & 2-way \\
+% L2 Unified & 256KB & 4-way \\
+% \bottomrule
+% \end{tabular}
+% \caption{Cache Configuration}
+% \label{tab:cache_config}
+% \end{table}
+
+
+% % Example Verilog code
+% \begin{lstlisting}[language=Verilog, caption=ALU Module Implementation]
+% module alu(
+%     input [31:0] a, b,
+%     input [3:0] alu_control,
+%     output reg [31:0] result,
+%     output zero
+% );
+
+% always @(*) begin
+%     case(alu_control)
+%         4'b0000: result = a + b;        // ADD
+%         4'b0001: result = a - b;        // SUB
+%         4'b0010: result = a & b;        // AND
+%         4'b0011: result = a | b;        // OR
+%         // Add more operations...
+%         default: result = 32'b0;
+%     endcase
+% end
+
+% assign zero = (result == 32'b0);
+
+% endmodule
+% \end{lstlisting}
+
+\chapter{Experimental Results}
+
+\section{Performance Analysis}
+
+% % Performance summary using custom command
+% \perftable{\mhz{100}}{1.2}{85\%}{250mW}
+
+% Example performance graph
+% \begin{figure}[H]
+% \centering
+% \begin{tikzpicture}
+% \begin{axis}[
+%     title={Benchmark Performance Comparison},
+%     xlabel={Benchmark},
+%     ylabel={Execution Time (ms)},
+%     ybar,
+%     symbolic x coords={Sort,Search,Matrix,FFT},
+%     xtick=data,
+%     nodes near coords,
+%     nodes near coords align={vertical},
+% ]
+% \addplot coordinates {(Sort,45) (Search,23) (Matrix,67) (FFT,89)};
+% \end{axis}
+% \end{tikzpicture}
+% \caption{Benchmark Performance Results}
+% \label{fig:benchmark}
+% \end{figure}
+
+\section{Analysis and Discussion}
+
+% \begin{warningbox}[title=Performance Bottleneck]
+% The main performance bottleneck identified is [describe bottleneck]. This results in [impact on performance]. Potential solutions include [list solutions].
+% \end{warningbox}
+
+\chapter{Conclusions and Future Work}
+
+\section{Project Summary}
+% Summarize what was accomplished
+
+\section{Future Enhancements}
+% Suggest improvements and extensions
+
+% ===== APPENDICES =====
+\appendix
+
+\chapter{Source Code Listings}
+% Include complete source code if needed
+
+\chapter{Additional Test Results}
+% Include detailed test data
+
+\chapter{Design Documents}
+% Include any additional design documentation
+
+% ===== BIBLIOGRAPHY =====
+\begin{thebibliography}{99}
+
+\bibitem{patterson2017}
+Patterson, D. A., \& Hennessy, J. L. (2017). 
+\textit{Computer organization and design: the hardware/software interface}. 
+
+\bibitem{harris2021}
+GPU Glossary by Modal.
+\textit{\url{https://modal.com/gpu-glossary}}. 
+
+% Add more references as needed
+
+\end{thebibliography}
+
+\end{document}

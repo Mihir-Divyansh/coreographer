@@ -1,55 +1,67 @@
-# Prerequisites
+# FuseSoC build artifacts
+build/
+.fusesoc/
+
+# Generated files
+rtl/generated/
+build/generated/
+
+# Simulation artifacts
+*.vcd
+*.fst
+*.fst.hier
+*.vvp
+*.log
+*.jou
+*.pb
+*.wdb
+
+# Verilator artifacts
+obj_dir/
 *.d
-
-# Object files
 *.o
-*.ko
-*.obj
-*.elf
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# Vivado artifacts
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.srcs/
+*.gen/
+.Xil/
+*.xpr
+*.str
+*.backup*
+*.jou
+*.log
+vivado*.jou
+vivado*.log
+.hbs/
 
-# Precompiled Headers
-*.gch
-*.pch
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.cgph/
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+# Editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+# Waveform viewers
+*.gtkw.bak
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+# Temporary files
+*.tmp
+*.bak
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-# debug information files
-*.dwo
+# Keep directory structure but ignore contents
+rtl/cores/vexriscv/*
+!rtl/cores/vexriscv/.gitkeep

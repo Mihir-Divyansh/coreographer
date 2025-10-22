@@ -1,0 +1,250 @@
+CAPI=2:
+
+name: ::coreographer:0.1.0
+description: Multi-core RISC-V system with hardware scheduler and neighbor register sharing
+
+filesets:
+  # RTL files - cores and wrappers
+  rtl_cores:
+    files:
+      - rtl/cores/vexriscv/VexRiscv.v : {file_type: verilogSource}
+    file_type: verilogSource
+
+  # Core wrapper and neighbor interface
+  rtl_core_wrapper:
+    files:
+      - rtl/core/core_wrapper.v
+      - rtl/core/neighbor_interface.v
+      - rtl/core/register_file_proxy.v
+    file_type: verilogSource
+
+  # Scheduler components
+  rtl_scheduler:
+    files:
+      - rtl/scheduler/task_dispatcher.v
+      - rtl/scheduler/task_queue.v
+      - rtl/scheduler/instruction_cache.v
+      - rtl/scheduler/dependency_tracker.v
+    file_type: verilogSource
+
+  # Interconnect
+  rtl_interconnect:
+    files:
+      - rtl/interconnect/memory_arbiter.v
+      - rtl/interconnect/neighbor_network.v
+      - rtl/interconnect/dispatch_bus.v
+    file_type: verilogSource
+
+  # Common files
+  rtl_common:
+    files:
+      - rtl/common/defines.vh : {is_include_file: true}
+      - rtl/common/params.vh : {is_include_file: true}
+    file_type: verilogSource
+
+  # Generated top-level (will be created by generator)
+  rtl_generated:
+    files:
+      - build/generated/top.v : {file_type: verilogSource}
+    file_type: verilogSource
+
+  # Testbenches
+  tb_files:
+    files:
+      - tb/tb_top.v
+      - tb/tb_core_wrapper.v
+      - tb/tb_scheduler.v
+      - tb/test_programs/test.hex : {file_type: user, copyto: .}
+    file_type: verilogSource
+
+  # PYNQ-Z2 constraints
+  pynq_z2_constraints:
+    files:
+      - constraints/pynq_z2.xdc
+    file_type: xdc
+
+  # Memory initialization files
+  mem_files:
+    files:
+      - tb/test_programs/*.hex : {file_type: user, copyto: .}
+
+parameters:
+  NUM_CORES:
+    datatype: int
+    default: 4
+    paramtype: vlogparam
+    description: Number of RISC-V cores
+  
+  XLEN:
+    datatype: int
+    default: 32
+    paramtype: vlogparam
+    description: Register width (32 or 64 bit)
+  
+  DATA_MEM_SIZE:
+    datatype: int
+    default: 32768
+    paramtype: vlogparam
+    description: Data memory size in bytes
+  
+  TOPOLOGY:
+    datatype: str
+    default: "RING"
+    paramtype: vlogdefine
+    description: Neighbor topology (RING, MESH, FULLY_CONNECTED)
+
+  TASK_CACHE_DEPTH:
+    datatype: int
+    default: 32
+    paramtype: vlogparam
+    description: Number of micro-tasks in scheduler cache
+
+generators:
+  coreographer_top_gen:
+    interpreter: python3
+    command: scripts/gen_top.py
+    description: Generate parameterized top-level based on configuration
+    usage: |
+      Generate top.v with specified number of cores and topology.
+      Uses configs/default.json or custom config file.
+
+generate:
+  - coreographer_top_gen
+
+targets:
+  default: &default
+    filesets:
+      - rtl_common
+      - rtl_cores
+      - rtl_core_wrapper
+      - rtl_interconnect
+      - rtl_scheduler
+      - rtl_generated
+    toplevel: coreographer_top
+    parameters:
+      - NUM_CORES
+      - XLEN
+      - DATA_MEM_SIZE
+      - TOPOLOGY
+      - TASK_CACHE_DEPTH
+
+  # Verilator simulation target
+  sim:
+    <<: *default
+    default_tool: verilator
+    description: Verilator simulation of full system
+    filesets_append:
+      - tb_files
+      - mem_files
+    toplevel: tb_top
+    tools:
+      verilator:
+        mode: cc
+        verilator_options:
+          - --trace
+          - --trace-structs
+          - --trace-underscore
+          - -Wall
+          - -Wno-fatal
+          - -Wno-PINCONNECTEMPTY
+          - --x-assign unique
+          - --x-initial unique
+          - -CFLAGS -std=c++14
+          - -LDFLAGS -pthread
+        run_options:
+          - +trace
+
+  # Individual component simulation targets
+  sim_core:
+    default_tool: verilator
+    description: Simulate single core wrapper
+    filesets:
+      - rtl_common
+      - rtl_cores
+      - rtl_core_wrapper
+      - tb_files
+    toplevel: tb_core_wrapper
+    tools:
+      verilator:
+        mode: cc
+        verilator_options:
+          - --trace
+          - -Wall
+
+  sim_scheduler:
+    default_tool: verilator
+    description: Simulate scheduler module
+    filesets:
+      - rtl_common
+      - rtl_scheduler
+      - tb_files
+    toplevel: tb_scheduler
+    tools:
+      verilator:
+        mode: cc
+        verilator_options:
+          - --trace
+          - -Wall
+
+  # Vivado synthesis for PYNQ-Z2
+  synth:
+    <<: *default
+    default_tool: vivado
+    description: Synthesize for PYNQ-Z2 (Zynq-7020)
+    filesets_append:
+      - pynq_z2_constraints
+    tools:
+      vivado:
+        part: xc7z020clg400-1
+        synth: vivado
+        pnr: vivado
+        jobs: 4
+        # Vivado strategy
+        synth_options:
+          - -flatten_hierarchy rebuilt
+          - -directive PerformanceOptimized
+        impl_options:
+          - -directive Performance_ExtraTimingOpt
+        # Generate reports
+        post_synth_tcl:
+          - scripts/vivado/post_synth_reports.tcl
+        post_impl_tcl:
+          - scripts/vivado/post_impl_reports.tcl
+
+  # FPGA with block design (using Zynq PS)
+  synth_zynq:
+    <<: *default
+    default_tool: vivado
+    description: Synthesize with Zynq PS integration
+    filesets_append:
+      - pynq_z2_constraints
+    tools:
+      vivado:
+        part: xc7z020clg400-1
+        synth: vivado
+        pnr: vivado
+        jobs: 4
+        # Include block design
+        hw_device: xc7z020_1
+        source_mgmt_mode: DisplayOnly
+        bd_files:
+          - scripts/vivado/coreographer_bd.tcl
+
+  # Lint target
+  lint:
+    default_tool: verilator
+    description: Lint RTL with Verilator
+    filesets:
+      - rtl_common
+      - rtl_cores
+      - rtl_core_wrapper
+      - rtl_interconnect
+      - rtl_scheduler
+      - rtl_generated
+    toplevel: coreographer_top
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - -Wall
+          - -Wno-fatal
